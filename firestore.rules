@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened global helpers
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (request.auth.token.email == "tafatioussama@gmail.com" && request.auth.token.email_verified == true)
+      );
+    }
+
+    // Validation helper for Order creation
+    function isValidOrder(data) {
+      return data.keys().hasAll([
+        'id', 'customerName', 'customerPhone', 'wilaya', 'address',
+        'items', 'subtotal', 'shipping', 'total', 'status', 'createdAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'customerName', 'customerPhone', 'wilaya', 'address',
+        'notes', 'items', 'subtotal', 'shipping', 'total', 'currency', 'status', 'createdAt'
+      ]) &&
+      data.id is string && data.id.size() > 0 && data.id.size() <= 64 &&
+      data.customerName is string && data.customerName.size() > 0 && data.customerName.size() <= 100 &&
+      data.customerPhone is string && data.customerPhone.size() > 0 && data.customerPhone.size() <= 25 &&
+      data.wilaya is string && data.wilaya.size() > 0 && data.wilaya.size() <= 100 &&
+      data.address is string && data.address.size() > 0 && data.address.size() <= 300 &&
+      (!('notes' in data) || (data.notes is string && data.notes.size() <= 500)) &&
+      data.items is list && data.items.size() > 0 && data.items.size() <= 50 &&
+      data.subtotal is number && data.subtotal >= 0 &&
+      data.shipping is number && data.shipping >= 0 &&
+      data.total is number && data.total >= 0 &&
+      (!('currency' in data) || (data.currency is string && data.currency.size() <= 10)) &&
+      data.status == 'Pending' &&
+      data.createdAt is string && data.createdAt.size() <= 50;
+    }
+
+    // Orders Collection
+    // Public customers can only create valid orders with initial 'Pending' status.
+    // Only verified administrators can list, read, or update order statuses.
+    match /orders/{orderId} {
+      allow create: if isValidId(orderId) &&
+                       isValidOrder(incoming()) &&
+                       incoming().id == orderId;
+
+      allow get, list: if isAdmin();
+
+      allow update: if isAdmin() &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['status']) &&
+                       incoming().status in ['Pending', 'Confirmed', 'Preparing', 'Shipped', 'Delivered', 'Cancelled'];
+
+      allow delete: if isAdmin();
+    }
+
+    // Products Collection
+    // Public customers can view catalog products.
+    // Authorized administrators can create, update, and delete products.
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Categories Collection
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Admins Collection
+    match /admins/{adminId} {
+      allow get: if isSignedIn();
+      allow list, write: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "entities": {
+    "Order": {
+      "title": "Order",
+      "description": "Customer purchase order for Koléa Cosmetic products",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique order reference ID",
+          "maxLength": 64
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Customer full name",
+          "maxLength": 100
+        },
+        "customerPhone": {
+          "type": "string",
+          "description": "Customer contact phone number",
+          "maxLength": 25
+        },
+        "wilaya": {
+          "type": "string",
+          "description": "Destination Wilaya / Region or Campus",
+          "maxLength": 100
+        },
+        "address": {
+          "type": "string",
+          "description": "Delivery street, landmark, or room number",
+          "maxLength": 300
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional customer order instructions",
+          "maxLength": 500
+        },
+        "items": {
+          "type": "array",
+          "description": "Ordered line items with verified product data"
+        },
+        "subtotal": {
+          "type": "number",
+          "description": "Calculated subtotal in DZD"
+        },
+        "shipping": {
+          "type": "number",
+          "description": "Shipping fee in DZD"
+        },
+        "total": {
+          "type": "number",
+          "description": "Total order amount in DZD"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code",
+          "maxLength": 10
+        },
+        "status": {
+          "type": "string",
+          "description": "Current order lifecycle status",
+          "enum": ["Pending", "Confirmed", "Preparing", "Shipped", "Delivered", "Cancelled"],
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the order was submitted",
+          "maxLength": 50
+        }
+      },
+      "required": ["id", "customerName", "customerPhone", "wilaya", "address", "items", "subtotal", "shipping", "total", "status", "createdAt"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Administrator account authorized to manage orders",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Admin email address",
+          "maxLength": 128
+        },
+        "role": {
+          "type": "string",
+          "description": "Admin access tier",
+          "maxLength": 32
+        }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Collection of customer purchase orders"
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Collection of authorized administrative accounts"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Koléa Cosmetic - Minimalist Botanical Skincare & Beauty",
+  "description": "Discover Koléa Cosmetic: high-performance botanical skincare, clean formulations, and luxury beauty essentials crafted for radiant, healthy skin.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
